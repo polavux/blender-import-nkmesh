@@ -102,7 +102,7 @@ class ImportNkmesh(bpy.types.Operator, ImportHelper):
         return {"FINISHED"}
 
 def menu_func(self, ctx):
-    self.layout.operator(ImportNkmesh.bl_idname, text=bl_label)
+    self.layout.operator(ImportNkmesh.bl_idname, text="Nkmesh (.nkmesh)")
 
 def register():
     bpy.utils.register_class(ImportNkmesh)
