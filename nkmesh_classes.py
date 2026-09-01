@@ -122,10 +122,15 @@ class Nkmesh:
             name = unpack_next_string(data)
             node_type = unpack_next_string(data)            
 
-            parent_node_index, mesh_index, grandparent_node_index, num_child_nodes, unknown_int_always_zero = unpack_next("<iiiII", data)
+            parent_node_index, mesh_index, grandparent_node_index, num_child_nodes, unknown_bytes_always_zero_1 = unpack_next("<iiiII", data)
             child_nodes = unpack_next(f"<{num_child_nodes}I", data)
 
-            unknown_values = unpack_next("<41f", data)
+            transform_matrix_1      = unpack_next("<16f", data)
+            transform_matrix_2      = unpack_next("<16f", data)
+            unknown_float_group_1   = unpack_next("<fff", data)
+            unknown_float_group_2   = unpack_next("<fff", data) # seems to be rotation-related
+            unknown_float_group_3   = unpack_next("<fff", data)
+            
             unknown_flag_1, unknown_flag_2, unknown_flag_3, unknown_flag_4 = unpack_next("<BBBB", data)
             offset_next_node = unpack_next_single_int(data)
             
@@ -134,8 +139,8 @@ class Nkmesh:
             return self(
                 name, node_type,
                 parent_node_index, mesh_index, grandparent_node_index, child_nodes,
-                unknown_values, unknown_int_always_zero, unknown_flag_1, unknown_flag_2, unknown_flag_3, unknown_flag_4,
-                offset_next_node
+                transform_matrix_1, transform_matrix_2, unknown_float_group_1, unknown_float_group_2, unknown_float_group_3,
+                unknown_flag_1, unknown_flag_2, unknown_flag_3, unknown_flag_4, offset_next_node
             )
 
         # NkmeshNode members
@@ -145,8 +150,11 @@ class Nkmesh:
         mesh_index: int
         grandparent_node_index: int
         child_nodes: tuple[int]
-        unknown_values: tuple[float]
-        unknown_int_always_zero: int
+        transform_matrix_1: tuple[float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float]
+        transform_matrix_2: tuple[float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float]
+        unknown_float_group_1: tuple[float, float, float]
+        unknown_float_group_2: tuple[float, float, float]
+        unknown_float_group_3: tuple[float, float, float]
         unknown_flag_1: int
         unknown_flag_2: int
         unknown_flag_3: int
