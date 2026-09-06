@@ -32,10 +32,10 @@ class ImportNkmesh(bpy.types.Operator, ImportHelper):
         
         # recursive function to recreate the node hierarchy of the model
         # todo:
-        # - automatically generating a material for each texture (texture node + color attribute node -> multiply node in "color" mode -> material output)
-        # - assigning generated materials to meshes
+        # - figure out why vertex colors aren't accurate to how they look in-game
+        # - materials need a way to combine both textures and vertex colors (texture node + color attribute node -> multiply node in "color" mode -> material output)
         # - limb nodes, armatures, and other things relating to animations
-        # - node transforms, whatever those unknown values in the node structure are for
+        # - camera nodes
         # - vertex normals (currently blender generates them automatically instead of using the ones imported from the file, though idk if it makes a difference)
         # - whatever that unknown stuff at the end of the mesh structure is for
         # - whatever that unknown stuff at the end of the whole file is for
@@ -52,9 +52,9 @@ class ImportNkmesh(bpy.types.Operator, ImportHelper):
                 # import verts/tris
                 scene_mesh.from_pydata(mesh.vert_coords, [], mesh.polygons)
                 
-                # create UV map and vert colors
+                # create UV map and apply vert colors
                 uv_layer = scene_mesh.uv_layers.new(name=mesh.name + "_UV", do_init=False)
-                color_attribute = scene_mesh.color_attributes.new(name=mesh.name + "_color", type="BYTE_COLOR", domain="CORNER")
+                color_attribute = scene_mesh.color_attributes.new(name="Vertex color", type="BYTE_COLOR", domain="CORNER")
                 vert_colors = tuple(element for i in mesh.vert_color_sets for element in decode_rle(i.runs))
                 
                 for polygon in scene_mesh.polygons:
@@ -66,9 +66,28 @@ class ImportNkmesh(bpy.types.Operator, ImportHelper):
                         if vert_index < len(vert_colors):
                             color_attribute.data[loop_index].color = (vert_colors[vert_index][0] / 255.0, vert_colors[vert_index][1] / 255.0, vert_colors[vert_index][2] / 255.0, 1.0)
                 
-                # change axis alignment so X is forward and Z is up (should probably change this to use a local axis in the future)
-                scene_obj.matrix_world = Matrix.Rotation(math.radians(90), 4, 'X') @ Matrix.Rotation(math.radians(90), 4, 'Y') @ scene_obj.matrix_world
-                bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+                # apply transform matrix
+                scene_obj.matrix_world = Matrix(node_data.transform_matrix_1) @ scene_obj.matrix_world
+                bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+                
+                # apply material
+                mat = bpy.data.materials.get(mesh.texture)
+
+                # create material for this texture if it hasn't been created already
+                if not mat:
+                    mat = bpy.data.materials.new(name=mesh.texture)
+                    mat.use_nodes = True
+                    
+                    mat_nodes = mat.node_tree.nodes
+                    mat_nodes.remove(mat_nodes.get("Principled BSDF"))
+                    
+                    attr_node = mat_nodes.new(type="ShaderNodeVertexColor")
+                    attr_node.layer_name = "Vertex color"
+                    attr_node.location = (-500, 0)
+                    
+                    mat.node_tree.links.new(attr_node.outputs["Color"], mat_nodes.get("Material Output").inputs["Surface"])
+                
+                scene_obj.data.materials.append(mat)
                 
                 # wrap up
                 scene_mesh.uv_layers.active = uv_layer
@@ -76,7 +95,13 @@ class ImportNkmesh(bpy.types.Operator, ImportHelper):
                 
             # LimbNode
             elif node_data.node_type == "LimbNode":
-                # todo armature stuff
+                # todo
+                
+                scene_obj = bpy.data.objects.new(node_data.name, None)
+                
+            # Camera
+            elif node_data.node_type == "Camera":
+                # todo
                 
                 scene_obj = bpy.data.objects.new(node_data.name, None)
             
