@@ -125,8 +125,8 @@ class Nkmesh:
             parent_node_index, mesh_index, grandparent_node_index, num_child_nodes, unknown_bytes_always_zero_1 = unpack_next("<iiiII", data)
             child_nodes = unpack_next(f"<{num_child_nodes}I", data)
 
-            transform_matrix_1      = unpack_next("<16f", data)
-            transform_matrix_2      = unpack_next("<16f", data)
+            transform_matrix_1      = (unpack_next("<4f", data), unpack_next("<4f", data), unpack_next("<4f", data), unpack_next("<4f", data))
+            transform_matrix_2      = (unpack_next("<4f", data), unpack_next("<4f", data), unpack_next("<4f", data), unpack_next("<4f", data))
             unknown_float_group_1   = unpack_next("<fff", data)
             unknown_float_group_2   = unpack_next("<fff", data) # seems to be rotation-related
             unknown_float_group_3   = unpack_next("<fff", data)
@@ -150,15 +150,15 @@ class Nkmesh:
         mesh_index: int
         grandparent_node_index: int
         child_nodes: tuple[int]
-        transform_matrix_1: tuple[float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float]
-        transform_matrix_2: tuple[float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float]
+        transform_matrix_1: tuple[tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float]]
+        transform_matrix_2: tuple[tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float]]
         unknown_float_group_1: tuple[float, float, float]
         unknown_float_group_2: tuple[float, float, float]
         unknown_float_group_3: tuple[float, float, float]
-        unknown_flag_1: int
-        unknown_flag_2: int
-        unknown_flag_3: int
-        unknown_flag_4: int
+        unknown_flag_1: bool
+        unknown_flag_2: bool
+        unknown_flag_3: bool
+        unknown_flag_4: bool
         offset_next_node: int
 
 
