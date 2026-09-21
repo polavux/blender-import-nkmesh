@@ -62,10 +62,10 @@ class Nkmesh:
         def from_stream(self, data):
 
             name = unpack_next_string(data)
-            texture = unpack_next_string(data)
-            unknown_4_bytes = unpack_next_single_int(data) # might be a unix timestamp?
+            texture_id = unpack_next_string(data)
+            numeric_texture_id = unpack_next_single_int(data)
 
-            print(f"Found mesh |name: {name:<50}|texture name: {texture:<50}|unknown bytes: {unknown_4_bytes}")
+            print(f"Found mesh |name: {name:<50}|texture id: {texture_id:<44}|numeric texture id: {numeric_texture_id}")
 
             num_uv_coords       = unpack_next_single_int(data)
             uv_coords           = unpack_next_array("<ff", data, num_uv_coords)
@@ -83,7 +83,7 @@ class Nkmesh:
                 unknown_values      = unpack_next_rle("<ffffff", data, num_unknown_values, 6)
 
             return self(
-                name, texture, unknown_4_bytes,
+                name, texture_id, numeric_texture_id,
                 vert_coords, vert_normals, vert_color_sets, uv_coords, polygons
             )
 
@@ -104,8 +104,8 @@ class Nkmesh:
 
         # NkmeshMesh members
         name: str
-        texture: str
-        unknown_4_bytes: int
+        texture_id: str
+        numeric_texture_id: int
 
         vert_coords: tuple[tuple[float, float, float]]
         vert_normals: tuple[tuple[float, float, float]]
@@ -127,11 +127,14 @@ class Nkmesh:
 
             transform_matrix_1      = (unpack_next("<4f", data), unpack_next("<4f", data), unpack_next("<4f", data), unpack_next("<4f", data))
             transform_matrix_2      = (unpack_next("<4f", data), unpack_next("<4f", data), unpack_next("<4f", data), unpack_next("<4f", data))
-            unknown_float_group_1   = unpack_next("<fff", data)
-            unknown_float_group_2   = unpack_next("<fff", data) # seems to be rotation-related
-            unknown_float_group_3   = unpack_next("<fff", data)
+            unknown_float_group_1   = unpack_next("<fff", data) # translation?
+            unknown_float_group_2   = unpack_next("<fff", data) # rotation?
+            unknown_float_group_3   = unpack_next("<fff", data) # scale?
             
-            unknown_flag_1, unknown_flag_2, unknown_flag_3, unknown_flag_4 = unpack_next("<BBBB", data)
+            unknown_flag_1, = unpack_next("<B", data)
+            unknown_flag_2, = unpack_next("<B", data) # always set to 0 from what i can tell
+            unknown_flag_3, = unpack_next("<B", data) # usually set to 1, most nodes that set this to 0 are face parts (eyes, eyelids, mouths)
+            unknown_flag_4, = unpack_next("<B", data) # usually set to 0, most nodes that set this to 1 are 2d planes (shadows, lights, 2d bloons, bloon status effect overlays) (might be for backface culling?)
             offset_next_node = unpack_next_single_int(data)
             
             print(f"Found node |name: {name:<50}|type: {node_type:<50}|flags: {unknown_flag_1} {unknown_flag_2} {unknown_flag_3} {unknown_flag_4}")
