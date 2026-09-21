@@ -9,7 +9,7 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty
 from mathutils import Matrix
 from itertools import chain, repeat
-from nkmesh import Nkmesh
+from nkmesh_classes import Nkmesh
 
 # expands a tuple of run length encoded tuples into one long tuple of tuples
 def decode_rle(rle_data) -> tuple:
